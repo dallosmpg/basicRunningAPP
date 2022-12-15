@@ -6,7 +6,7 @@ function getAndUpdateSpeed() {
         const currLocationData = position.coords;
         const currLocationSpeed = currLocationData.speed === null ? '0' : currLocationData.speed;
         // calculate time to go 1000m
-        const timeToGo1000m = 1000 / currLocationSpeed * 3.6;
+        const timeToGo1000m = 1000 / currLocationSpeed * 3.6 === Infinity ? '0 - Not moving' : 1000 / currLocationSpeed * 3.6;
         speedIndicatorH1.textContent = timeToGo1000m;
         console.log(currLocationSpeed);
         console.log(position.coords);
