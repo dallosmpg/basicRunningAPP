@@ -1,20 +1,26 @@
 const speedIndicatorH1 = document.querySelector('.speed-indication');
 const startBtn = document.querySelector('.start-btn');
 const stopBtn = document.querySelector('.stop-btn');
-let interval;
+const readOutSelect = document.querySelector('#readout-timer');
+
+let positionUpdateSec = 0;
+let notMoving = true;
+
 
 function getAndUpdateSpeed() {
-  console.log('New location');
-    if (navigator.geolocation) {
+  if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position) {
-        // Do something with the position object
-        const currLocationData = position.coords;
-        const currLocationSpeed = currLocationData.speed === null ? '0' : currLocationData.speed;
-        // calculate time to go 1000m
-        const timeToGo1000m = convertSpeedToMinPerKM(currLocationSpeed, 'second');
-        speedIndicatorH1.textContent = timeToGo1000m;
-        console.log(currLocationSpeed);
-        console.log(position.coords);
+      const currLocationData = position.coords;
+      const currLocationSpeed = currLocationData.speed;
+      
+      const timeToGo1000m = convertSpeedToMinPerKM(currLocationSpeed, 'second');
+      speedIndicatorH1.textContent = timeToGo1000m;
+      
+      positionUpdateSec += 5;
+      if (parseInt(readOutSelect.value) === positionUpdateSec) {
+        readPace(timeToGo1000m);
+        positionUpdateSec = 0;
+      }
       },
       error => console.log(error), {
         enableHighAccuracy: true,
@@ -29,8 +35,12 @@ function getAndUpdateSpeed() {
 }
 
 function convertSpeedToMinPerKM(speed, unitTime) {
-  if (isNaN(speed) || !isFinite(speed) || typeof speed !== 'number') return 'Not moving';
+  if (isNaN(speed) || !isFinite(speed) || typeof speed !== 'number') {
+    notMoving = true;
+    return 'Not moving';
+  } 
 
+  notMoving = false;
   switch (unitTime) {
     case 'hour' : 
       const unitMinutes = 60;
@@ -39,6 +49,7 @@ function convertSpeedToMinPerKM(speed, unitTime) {
       const kmTime = unitMinutes / distInAnHour
       const kmMinutes = Math.floor(kmTime);
       const kmSeconds = Math.floor((kmTime - kmMinutes) * 60) === 0 ? '00' : Math.floor((kmTime - kmMinutes) * 60);
+
       return `Pace: ${kmMinutes}:${kmSeconds} min/km`;
 
     case 'second' : 
@@ -49,6 +60,16 @@ function convertSpeedToMinPerKM(speed, unitTime) {
       return `Pace: ${kmMinutesMS}:${kmSecondsMS} min/km`;
   }
 
+}
+
+function readPace(text) {
+  console.log('Reading pace');
+  console.log(positionUpdateSec);
+  if (notMoving) return;
+
+  const utterance = new SpeechSynthesisUtterance();
+  utterance.text = text;
+  speechSynthesis.speak(utterance);
 }
 
 function toggleBtnVis(startVis) {
@@ -64,7 +85,7 @@ function toggleBtnVis(startVis) {
 function startUpdateSpeedAndRead() {
   console.log('Start measuring');
   getAndUpdateSpeed();
-  interval = setInterval(getAndUpdateSpeed, 3000);
+  interval = setInterval(getAndUpdateSpeed, 5000);
   startBtn.classList.add('hidden');
   stopBtn.classList.remove('hidden');
 }
@@ -74,7 +95,9 @@ function stopUpdateAndRead() {
   clearInterval(interval);
   startBtn.classList.remove('hidden');
   stopBtn.classList.add('hidden');
+  speedIndicatorH1.textContent = 'Not started yet'
 }
 
 startBtn.addEventListener('click', startUpdateSpeedAndRead);
 stopBtn.addEventListener('click', stopUpdateAndRead);
+

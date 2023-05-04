@@ -9,8 +9,26 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <button class="start-btn">Start measuring</button>
-    <button class="stop-btn hidden">Stop measuring</button>
-    <h1 class="speed-indication">Not started</h1>
+    <div class="controls flex-center-col">
+        <button class="start-btn">Start measuring</button>
+        <button class="stop-btn hidden">Stop measuring</button>
+        <div class="readout-select">
+            <label for="readout-timer">Readout intervals:</label>
+            <select name="readout-timer" id="readout-timer">
+                <option value="5">5 sec</option>
+                <option value="10">10 sec</option>
+                <option value="15">15 sec</option>
+                <option value="30">30 sec</option>
+                <option value="45">45 sec</option>
+                <option value="60">60 sec</option>
+                <option value="90">90 sec</option>
+                <option value="120">120 sec</option>
+                <option value="150">150 sec</option>
+                <option value="180">180 sec</option>
+            </select>
+        </div>
+    </div>
+    
+    <h1 class="speed-indication">Not started yet</h1>
 </body>
 </html>
