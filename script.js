@@ -5,9 +5,11 @@ const readOutSelect = document.querySelector('#readout-timer');
 
 let positionUpdateSec = 0;
 let notMoving = true;
+let readOutText;
+let wakeLock;
 
 
-function getAndUpdateSpeed() {
+async function getAndUpdateSpeed() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position) {
       const currLocationData = position.coords;
@@ -18,7 +20,7 @@ function getAndUpdateSpeed() {
       
       positionUpdateSec += 5;
       if (parseInt(readOutSelect.value) === positionUpdateSec) {
-        readPace(timeToGo1000m);
+        readPace();
         positionUpdateSec = 0;
       }
       },
@@ -27,7 +29,13 @@ function getAndUpdateSpeed() {
         timeout: 5000,
         maximumAge: 0
       });
-      
+      if (!wakeLock) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {
+          console.error(`${err.name}, ${err.message}`);
+        }
+      }
   } else {
     // Geolocation is not supported by the browser
     speedIndicatorH1.textContent = 'Geolocation is not supported by the browser';
@@ -50,6 +58,8 @@ function convertSpeedToMinPerKM(speed, unitTime) {
       const kmMinutes = Math.floor(kmTime);
       const kmSeconds = Math.floor((kmTime - kmMinutes) * 60) === 0 ? '00' : Math.floor((kmTime - kmMinutes) * 60);
 
+      readOutText = `Pace: ${kmMinutes} minutes, ${kmSeconds} seconds`
+
       return `Pace: ${kmMinutes}:${kmSeconds} min/km`;
 
     case 'second' : 
@@ -57,18 +67,20 @@ function convertSpeedToMinPerKM(speed, unitTime) {
       const kmMinutesMS = Math.floor(kmTimeMS);
       const kmSecondsMS = Math.floor((kmTimeMS - kmMinutesMS) * 60) === 0 ? '00' : Math.floor((kmTimeMS - kmMinutesMS) * 60);
 
+      readOutText = `Pace: ${kmMinutesMS} minutes, ${kmSecondsMS} seconds`
+
       return `Pace: ${kmMinutesMS}:${kmSecondsMS} min/km`;
   }
 
 }
 
-function readPace(text) {
-  console.log('Reading pace');
-  console.log(positionUpdateSec);
+function readPace() {
   if (notMoving) return;
 
   const utterance = new SpeechSynthesisUtterance();
-  utterance.text = text;
+  utterance.text = readOutText;
+  utterance.lang = 'en-EN';
+  console.log(utterance);
   speechSynthesis.speak(utterance);
 }
 
