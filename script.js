@@ -1,4 +1,5 @@
-const speedIndicatorH1 = document.querySelector('.speed-indication');
+const speedIndicatorH1 = document.querySelector('.pace-display');
+const distanceDisplay = document.querySelector('.distance-display');
 const startBtn = document.querySelector('.start-btn');
 const stopBtn = document.querySelector('.stop-btn');
 const readOutSelect = document.querySelector('#readout-timer');
@@ -8,12 +9,50 @@ let notMoving = true;
 let readOutText;
 let wakeLock;
 
+let lastCoords; 
+let totalDistance = 0;
+distanceDisplay.textContent = `${totalDistance} kilometers`;
+
+function calcDistance(currLocation) {
+  if (!lastCoords) {
+    lastCoords = {latitude: currLocation.latitude, longitude: currLocation.longitude};
+    return;
+  }
+  const currCoords = {latitude: currLocation.latitude, longitude: currLocation.longitude};
+
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const earthRadius = 6371; // in km
+  
+    const dLat = degToRad(lat2 - lat1);
+    const dLon = degToRad(lon2 - lon1);
+  
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(degToRad(lat1)) *
+        Math.cos(degToRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+  
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = earthRadius * c;
+  
+    return distance;
+  }
+  
+  function degToRad(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+  
+  totalDistance += getDistanceFromLatLonInKm(lastCoords.latitude, lastCoords.longitude, currCoords.latitude, currCoords.longitude);
+  distanceDisplay.textContent = `${(totalDistance).toFixed(3) } kilometers`;
+}
 
 async function getAndUpdateSpeed() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position) {
       const currLocationData = position.coords;
       const currLocationSpeed = currLocationData.speed;
+      calcDistance(currLocationData);
       
       const timeToGo1000m = convertSpeedToMinPerKM(currLocationSpeed, 'second');
       speedIndicatorH1.textContent = timeToGo1000m;
@@ -107,7 +146,8 @@ function stopUpdateAndRead() {
   clearInterval(interval);
   startBtn.classList.remove('hidden');
   stopBtn.classList.add('hidden');
-  speedIndicatorH1.textContent = 'Not started yet'
+  speedIndicatorH1.textContent = 'Not started yet';
+  totalDistance = 0;
 }
 
 startBtn.addEventListener('click', startUpdateSpeedAndRead);
